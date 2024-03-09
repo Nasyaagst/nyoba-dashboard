@@ -15,12 +15,7 @@ import seaborn as sns
 import streamlit as st
 
 # Load dataset
-@st.cache
-def load_data(
 df = pd.read_csv("https://raw.githubusercontent.com/Nasyaagst/Submission/main/all_data.csv")
-  return df
-
-df = load_data()
 
 # Convert 'year' column to datetime
 df['year'] = pd.to_datetime(df['year'])
