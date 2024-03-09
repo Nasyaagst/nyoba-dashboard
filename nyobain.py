@@ -14,15 +14,18 @@ import matplotlib.colors as mcolors
 import seaborn as sns
 import streamlit as st
 
+# Load dataset
+@st.cache
+def load_data(
 df = pd.read_csv("https://raw.githubusercontent.com/Nasyaagst/Submission/main/all_data.csv")
+  return df
 
-# Print title
-st.title('Simple Dashboard of AQI of Shunyi Area')
+df = load_data()
 
 # Convert 'year' column to datetime
 df['year'] = pd.to_datetime(df['year'])
 
-# Slider widget for selecting time range
+# Sidebar: Select Time Range
 st.sidebar.subheader("Select Time Range")
 start_date = st.sidebar.date_input("Start Date", pd.to_datetime('2013-03-01'))
 end_date = st.sidebar.date_input("End Date", pd.to_datetime('2017-02-28'))
@@ -30,9 +33,22 @@ end_date = st.sidebar.date_input("End Date", pd.to_datetime('2017-02-28'))
 # Filter data based on selected time range
 filtered_df = df[(df['year'] >= start_date) & (df['year'] <= end_date)]
 
-# Display filtered data
-st.subheader("Filtered Data")
-st.write(filtered_df)
+# Calculate maximum and minimum values for each pollutant within the selected time range
+max_values = filtered_df[['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']].max()
+min_values = filtered_df[['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']].min()
+
+# Calculate maximum AQI within the selected time range
+max_aqi_date = filtered_df.loc[filtered_df['AQI'].idxmax()]
+
+# Display maximum and minimum pollutant values and maximum AQI
+st.subheader("Maximum Pollutant Values and Maximum AQI")
+st.write("Maximum Pollutant Values:")
+st.write(max_values)
+st.write("Minimum Pollutant Values:")
+st.write(min_values)
+st.write("Maximum AQI:")
+st.write("Date:", max_aqi_date['year'].date())
+st.write("Maximum AQI:", max_aqi_date['AQI'])
 
 # Find the date and time when each pollutant reaches its highest value
 max_pm25 = df[df['PM2.5'] == df['PM2.5'].max()]
@@ -43,13 +59,13 @@ max_co = df[df['CO'] == df['CO'].max()]
 max_o3 = df[df['O3'] == df['O3'].max()]
 
 # Print the results
-print("Date and time when each pollutant reaches its highest value:")
-print("PM2.5:", max_pm25[['year', 'month', 'day', 'hour']])
-print("PM10:", max_pm10[['year', 'month', 'day', 'hour']])
-print("SO2:", max_so2[['year', 'month', 'day', 'hour']])
-print("NO2:", max_no2[['year', 'month', 'day', 'hour']])
-print("CO:", max_co[['year', 'month', 'day', 'hour']])
-print("O3:", max_o3[['year', 'month', 'day', 'hour']])
+st.subheader("Date and Time When Each Pollutant Reaches Its Highest Value")
+st.write("PM2.5:", max_pm25[['year', 'month', 'day', 'hour']])
+st.write("PM10:", max_pm10[['year', 'month', 'day', 'hour']])
+st.write("SO2:", max_so2[['year', 'month', 'day', 'hour']])
+st.write("NO2:", max_no2[['year', 'month', 'day', 'hour']])
+st.write("CO:", max_co[['year', 'month', 'day', 'hour']])
+st.write("O3:", max_o3[['year', 'month', 'day', 'hour']])
 
 # Find the date and time when each pollutant reaches its lowest value
 min_pm25 = df[df['PM2.5'] == df['PM2.5'].min()]
@@ -60,69 +76,52 @@ min_co = df[df['CO'] == df['CO'].min()]
 min_o3 = df[df['O3'] == df['O3'].min()]
 
 # Print the results
-print("Date and time when each pollutant reaches its lowest value:")
-print("PM2.5:", min_pm25[['year', 'month', 'day', 'hour']])
-print("PM10:", min_pm10[['year', 'month', 'day', 'hour']])
-print("SO2:", min_so2[['year', 'month', 'day', 'hour']])
-print("NO2:", min_no2[['year', 'month', 'day', 'hour']])
-print("CO:", min_co[['year', 'month', 'day', 'hour']])
-print("O3:", min_o3[['year', 'month', 'day', 'hour']])
+st.subheader("Date and Time When Each Pollutant Reaches Its Lowest Value")
+st.write("PM2.5:", min_pm25[['year', 'month', 'day', 'hour']])
+st.write("PM10:", min_pm10[['year', 'month', 'day', 'hour']])
+st.write("SO2:", min_so2[['year', 'month', 'day', 'hour']])
+st.write("NO2:", min_no2[['year', 'month', 'day', 'hour']])
+st.write("CO:", min_co[['year', 'month', 'day', 'hour']])
+st.write("O3:", min_o3[['year', 'month', 'day', 'hour']])
 
 # Calculate mean or median concentration of each pollutant
 pollutant_mean = df[['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']].mean()
 pollutant_median = df[['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']].median()
 
 # Print the mean and median concentrations of pollutants
-print("Mean concentrations of pollutants:")
-print(pollutant_mean)
-print("\nMedian concentrations of pollutants:")
-print(pollutant_median)
-
-# define a function to calculate AQI
-def calculate_aqi(pm25, pm10, so2, no2, co, o3):
-    # parameter contains each pollutant concentrations
-    aqi = max(pm25, pm10, so2, no2, co, o3)
-    return aqi
+st.subheader("Mean and Median Concentrations of Pollutants")
+st.write("Mean concentrations of pollutants:")
+st.write(pollutant_mean)
+st.write("Median concentrations of pollutants:")
+st.write(pollutant_median)
 
 # Calculate AQI for each day
-df['AQI'] = df.apply(lambda row: calculate_aqi(row['PM2.5'], row['PM10'], row['SO2'], row['NO2'], row['CO'], row['O3']), axis=1)
+df['AQI'] = df.apply(lambda row: max(row['PM2.5'], row['PM10'], row['SO2'], row['NO2'], row['CO'], row['O3']), axis=1)
 
 # Find the day with the highest AQI
 day_max_aqi = df.loc[df['AQI'].idxmax()]
 
-# Extract the date components
-highest_aqi_date = day_max_aqi[['year', 'month', 'day']]
+# Display the day with the highest AQI
+st.subheader("Day With the Highest AQI")
+st.write("Date:", day_max_aqi['year'].date())
+st.write("AQI:", day_max_aqi['AQI'])
 
-# Format the date
-date_str = f"{highest_aqi_date['month']}/{highest_aqi_date['day']}/{highest_aqi_date['year']}"
-
-# Print the result
-print("The day with the highest AQI in Shunyi:")
-print(f"- Date: {date_str}")
-print(f"- AQI: {day_max_aqi['AQI']}")
-
+# Plot mean concentrations of pollutants
+st.subheader("Mean Concentrations of Pollutants")
 plt.figure(figsize=(10, 6))
-
 pollutant_mean.plot(kind='bar', color='red')
-
 plt.title("Mean Concentrations of Pollutants", loc="center", fontsize=15)
-
 plt.xlabel('Pollutant')
-
 plt.ylabel('Concentration (µg/m³ or ppm)')
-
 plt.xticks(rotation=0)
+st.pyplot(plt)
 
-plt.show()
-
+# Create a heatmap of correlation between weather variables and pollutant concentrations
+st.subheader("Correlation Between Weather Variables and Pollutant Concentrations")
 weather_variables = ['TEMP', 'PRES', 'DEWP', 'RAIN', 'WSPM']
 pollutants = ['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']
 selected_columns = weather_variables + pollutants
-
-# Calculate the correlation matrix
 correlation_matrix = df[selected_columns].corr()
-
-# Create a heatmap
 plt.figure(figsize=(10, 8))
 sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", vmin=-1, vmax=1)
 plt.title('Correlation between Weather Variables and Pollutant Concentrations')
@@ -131,21 +130,4 @@ plt.ylabel('Weather Variables')
 plt.xticks(rotation=45)
 plt.yticks(rotation=0)
 plt.tight_layout()
-plt.show()
-
-
-# Calculate maximum and minimum values for each pollutant within the selected time range
-max_values = filtered_df[['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']].max()
-min_values = filtered_df[['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']].min()
-
-# Calculate maximum AQI within the selected time range
-max_aqi = filtered_df['AQI'].max()
-
-# Display maximum and minimum pollutant values and maximum AQI
-st.subheader("Maximum Pollutant Values and Maximum AQI")
-st.write("Maximum Pollutant Values:")
-st.write(max_values)
-st.write("Minimum Pollutant Values:")
-st.write(min_values)
-st.write("Maximum AQI:")
-st.write(max_aqi)
+st.pyplot(plt)
